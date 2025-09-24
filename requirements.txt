@@ -1,3 +1,8 @@
+# In your local project, update requirements.txt
+echo "gunicorn" >> requirements.txt
+
+# Or recreate the full file:
+cat > requirements.txt << 'EOF'
 Django>=4.2
 djangorestframework
 django-tailwind[reload]
@@ -8,4 +13,5 @@ dj-database-url
 requests
 pillow
 gunicorn
-whitenoise
+whitenoise[brotli]
+EOF
