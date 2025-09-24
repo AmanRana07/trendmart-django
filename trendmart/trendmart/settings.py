@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from decouple import config
 import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,17 +22,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 SECRET_KEY = "-jgc=z#fx2zh6v3nhl+c3lj1h-0mevu6^dgq$m&3!b9wn7a51q"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Allowed hosts for production
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '*.onrender.com',  # For Render deployment
-    '*.pythonanywhere.com',  # For PythonAnywhere backup
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",  # Allow all Render subdomains
+    "trendmart.onrender.com",
 ]
 
 # Application definition
@@ -101,21 +103,19 @@ WSGI_APPLICATION = "trendmart.wsgi.application"
 
 # Database
 # For development, we'll use SQLite first, then PostgreSQL for production
-if 'DATABASE_URL' in os.environ:
+if "DATABASE_URL" in os.environ:
     # Production: Railway/Heroku PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
-    }
+    DATABASES = {"default": dj_database_url.parse(os.environ.get("DATABASE_URL"))}
 else:
     # Development: Local PostgreSQL
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'trendmart'),
-            'USER': os.getenv('DB_USER', 'trendmart_user'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'aman'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "trendmart"),
+            "USER": os.getenv("DB_USER", "trendmart_user"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "aman"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
         }
     }
 
