@@ -9,4 +9,3 @@ requests
 pillow
 gunicorn
 whitenoise[brotli]
-EOF
