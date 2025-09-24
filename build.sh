@@ -5,6 +5,20 @@ set -o errexit
 
 echo " Starting TrendMart deployment build..."
 
+
+python -c "
+import requests
+try:
+    response = requests.get('https://fakestoreapi.com/products/1', timeout=10)
+    print(f' API Test Status: {response.status_code}')
+    if response.status_code != 200:
+        print(' API not accessible from this server')
+        exit(1)
+except Exception as e:
+    print(f' API connection failed: {e}')
+    exit(1)
+"
+
 # Show current directory and contents for debugging
 echo " Current directory: $(pwd)"
 echo " Directory contents:"

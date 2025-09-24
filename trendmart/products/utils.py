@@ -8,202 +8,182 @@ import random
 class FakeStoreAPIClient:
     BASE_URL = "https://fakestoreapi.com"
 
-    # Multiple User-Agent options to rotate
-    USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
-    ]
+    # Comprehensive headers to avoid 403 blocks
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Referer": "https://fakestoreapi.com/",
+        "Origin": "https://fakestoreapi.com",
+    }
 
     @classmethod
-    def _get_headers(cls):
-        """Get random headers to avoid detection"""
-        return {
-            "User-Agent": random.choice(cls.USER_AGENTS),
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "cross-site",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-        }
-
-    @classmethod
-    def _make_request_with_retry(cls, url, max_retries=5):
-        """Make HTTP request with retry logic and different strategies"""
-
-        for attempt in range(max_retries):
+    def _make_request(cls, url, retries=3):
+        """Make HTTP request with retry logic and proper error handling"""
+        for attempt in range(retries):
             try:
-                print(f"🔄 Attempt {attempt + 1}/{max_retries} for {url}")
+                print(f"🔄 Attempt {attempt + 1}/{retries} - Fetching: {url}")
 
-                # Wait between attempts with exponential backoff
+                # Add random delay to avoid rate limiting
                 if attempt > 0:
-                    wait_time = (2**attempt) + random.uniform(0, 1)
-                    print(f"⏳ Waiting {wait_time:.1f} seconds...")
-                    time.sleep(wait_time)
+                    delay = random.uniform(1, 3)
+                    print(f"⏱️  Waiting {delay:.1f}s before retry...")
+                    time.sleep(delay)
 
-                # Try different approaches for each attempt
-                if attempt == 0:
-                    # Standard request
-                    response = requests.get(url, headers=cls._get_headers(), timeout=30)
-                elif attempt == 1:
-                    # With session to maintain cookies
-                    session = requests.Session()
-                    session.headers.update(cls._get_headers())
-                    response = session.get(url, timeout=30)
-                elif attempt == 2:
-                    # Through different endpoint approach
-                    response = requests.get(
-                        url,
-                        headers=cls._get_headers(),
-                        timeout=45,
-                        allow_redirects=True,
-                    )
-                elif attempt == 3:
-                    # Try with minimal headers
-                    simple_headers = {
-                        "User-Agent": random.choice(cls.USER_AGENTS),
-                        "Accept": "application/json",
-                    }
-                    response = requests.get(url, headers=simple_headers, timeout=30)
-                else:
-                    # Last attempt with different approach
-                    response = requests.get(
-                        url, headers={"User-Agent": "curl/7.68.0"}, timeout=60
-                    )
+                # Create session with connection pooling
+                session = requests.Session()
+                session.headers.update(cls.HEADERS)
+
+                response = session.get(
+                    url,
+                    timeout=60,  # Increased timeout
+                    allow_redirects=True,
+                    verify=True,  # Verify SSL certificates
+                )
 
                 print(f"📊 Response Status: {response.status_code}")
-                print(f"📋 Response Headers: {dict(response.headers)}")
+                print(f"📡 Response Headers: {dict(response.headers)}")
 
                 if response.status_code == 200:
-                    print("✅ Request successful!")
+                    print(f"✅ Success! Content length: {len(response.content)} bytes")
                     return response.json()
+
                 elif response.status_code == 403:
-                    print(f"❌ 403 Forbidden on attempt {attempt + 1}")
-                    print(f"📝 Response text: {response.text[:200]}...")
-                    continue
+                    print(f"❌ 403 Forbidden - Attempt {attempt + 1}")
+                    print(f"🔍 Response content: {response.text[:500]}")
+
+                    if attempt == retries - 1:
+                        print("❌ All attempts failed with 403")
+                        raise requests.exceptions.HTTPError(
+                            f"403 Forbidden after {retries} attempts"
+                        )
+
                 elif response.status_code == 429:
-                    print(f"⏳ Rate limited (429), waiting longer...")
-                    time.sleep(10 + attempt * 5)
-                    continue
+                    print(f"⏳ Rate limited - waiting longer...")
+                    time.sleep(5)  # Wait longer for rate limits
+
                 else:
-                    print(f"⚠️  Unexpected status: {response.status_code}")
                     response.raise_for_status()
 
             except requests.exceptions.Timeout:
-                print(f"⏰ Timeout on attempt {attempt + 1}")
-                continue
+                print(f"⏱️  Timeout on attempt {attempt + 1}")
+                if attempt == retries - 1:
+                    raise
+
             except requests.exceptions.ConnectionError:
                 print(f"🔌 Connection error on attempt {attempt + 1}")
-                continue
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Request error on attempt {attempt + 1}: {e}")
-                continue
+                if attempt == retries - 1:
+                    raise
 
-        # If all attempts failed
-        raise Exception(f"Failed to fetch data from {url} after {max_retries} attempts")
+            except Exception as e:
+                print(f"❌ Error on attempt {attempt + 1}: {str(e)}")
+                if attempt == retries - 1:
+                    raise
+
+        raise requests.exceptions.RequestException("All retry attempts failed")
 
     @classmethod
     def fetch_products(cls):
-        """Fetch products from Fake Store API with aggressive retry"""
-        url = f"{cls.BASE_URL}/products"
-        print("🔄 Fetching products from Fake Store API...")
-        print(f"🌐 URL: {url}")
-
+        """Fetch products from Fake Store API with enhanced error handling"""
         try:
-            data = cls._make_request_with_retry(url)
+            print("🔄 Starting product fetch from Fake Store API...")
+            data = cls._make_request(f"{cls.BASE_URL}/products")
             print(f"✅ Successfully fetched {len(data)} products")
             return data
         except Exception as e:
-            print(f"❌ CRITICAL: Could not fetch products: {e}")
-            raise Exception(f"API fetch failed: {e}")
+            print(f"❌ Failed to fetch products: {e}")
+            raise  # Re-raise to see the actual error
 
     @classmethod
     def fetch_categories(cls):
-        """Fetch categories from Fake Store API with aggressive retry"""
-        url = f"{cls.BASE_URL}/products/categories"
-        print("🔄 Fetching categories from Fake Store API...")
-        print(f"🌐 URL: {url}")
-
+        """Fetch categories from Fake Store API with enhanced error handling"""
         try:
-            data = cls._make_request_with_retry(url)
+            print("🔄 Starting category fetch from Fake Store API...")
+            data = cls._make_request(f"{cls.BASE_URL}/products/categories")
             print(f"✅ Successfully fetched {len(data)} categories")
             return data
         except Exception as e:
-            print(f"❌ CRITICAL: Could not fetch categories: {e}")
-            raise Exception(f"API fetch failed: {e}")
+            print(f"❌ Failed to fetch categories: {e}")
+            raise  # Re-raise to see the actual error
 
     @classmethod
     def sync_data(cls):
-        """Sync products and categories - MUST succeed from API"""
+        """Sync products and categories with local database"""
+        print("🚀 Starting API data sync...")
 
-        print("🚀 Starting API data synchronization...")
+        try:
+            # Sync categories first
+            print("📋 Fetching categories...")
+            categories_data = cls.fetch_categories()
+            print(f"📋 Processing {len(categories_data)} categories...")
 
-        # Fetch categories first (required)
-        categories_data = cls.fetch_categories()
-        categories_created = 0
-
-        for cat_name in categories_data:
-            category, created = Category.objects.get_or_create(
-                name=cat_name.title(),
-                defaults={"slug": cat_name.lower().replace(" ", "-").replace("'", "")},
-            )
-            if created:
-                categories_created += 1
-                print(f"✅ Created category: {category.name}")
-
-        # Fetch products (required)
-        products_data = cls.fetch_products()
-        products_created = 0
-        products_updated = 0
-
-        for product_data in products_data:
-            try:
-                category, _ = Category.objects.get_or_create(
-                    name=product_data["category"].title(),
+            for cat_name in categories_data:
+                category, created = Category.objects.get_or_create(
+                    name=cat_name.title(),
                     defaults={
-                        "slug": product_data["category"]
-                        .lower()
-                        .replace(" ", "-")
-                        .replace("'", "")
+                        "slug": cat_name.lower().replace(" ", "-").replace("'", "")
                     },
                 )
-
-                product, created = Product.objects.update_or_create(
-                    external_id=product_data["id"],
-                    defaults={
-                        "title": product_data["title"],
-                        "description": product_data["description"],
-                        "price": product_data["price"],
-                        "category": category,
-                        "image_url": product_data["image"],
-                        "rating_rate": product_data["rating"]["rate"],
-                        "rating_count": product_data["rating"]["count"],
-                        "is_active": True,
-                    },
-                )
-
                 if created:
-                    products_created += 1
-                    print(f"Created: {product.title[:50]}...")
-                else:
-                    products_updated += 1
-                    print(f" Updated: {product.title[:50]}...")
+                    print(f"✅ Created category: {category.name}")
 
-            except Exception as e:
-                print(f" Error processing product {product_data.get('id')}: {e}")
-                continue
+            # Sync products
+            print("📦 Fetching products...")
+            products_data = cls.fetch_products()
+            print(f"📦 Processing {len(products_data)} products...")
 
-        total_products = Product.objects.filter(is_active=True).count()
-        total_categories = Category.objects.count()
+            synced_count = 0
+            for product_data in products_data:
+                try:
+                    category, created = Category.objects.get_or_create(
+                        name=product_data["category"].title(),
+                        defaults={
+                            "slug": product_data["category"]
+                            .lower()
+                            .replace(" ", "-")
+                            .replace("'", "")
+                        },
+                    )
 
-        result_msg = f"API SYNC SUCCESS: Created {products_created} products, updated {products_updated} products, {categories_created} new categories. Total: {total_products} products, {total_categories} categories"
-        print(result_msg)
+                    product, created = Product.objects.update_or_create(
+                        external_id=product_data["id"],
+                        defaults={
+                            "title": product_data["title"],
+                            "description": product_data["description"],
+                            "price": product_data["price"],
+                            "category": category,
+                            "image_url": product_data["image"],
+                            "rating_rate": product_data["rating"]["rate"],
+                            "rating_count": product_data["rating"]["count"],
+                            "is_active": True,
+                        },
+                    )
+                    if created:
+                        synced_count += 1
+                        print(f"✅ Created: {product.title[:50]}...")
+                    else:
+                        print(f"🔄 Updated: {product.title[:50]}...")
 
-        return result_msg
+                except Exception as e:
+                    print(f"❌ Error syncing product {product_data.get('id')}: {e}")
+                    continue
+
+            total_products = Product.objects.filter(is_active=True).count()
+            total_categories = Category.objects.count()
+
+            result = f"✅ SUCCESS! Synced {synced_count} new products and {len(categories_data)} categories. Database now has {total_products} total products across {total_categories} categories."
+            print(result)
+            return result
+
+        except Exception as e:
+            error_msg = f"❌ API sync completely failed: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)  # Fail the build if API doesn't work
