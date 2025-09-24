@@ -1,0 +1,26 @@
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.sqlite3
+.env
+venv/
+env/
+.DS_Store
+staticfiles/
+media/
+
+# Tailwind/Node
+node_modules/
+package-lock.json
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-5xl font-bold mb-6">
+            Discover <span class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Trending</span> Products
+        </h1>
+        <p class="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Explore the most popular products loved by thousands of customers. Find your next favorite item!
+        </p>
+        <a href="{% url 'products_list' %}" 
+           class="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-50 transition-colors inline-flex items-center">
+            <i class="fas fa-shopping-bag mr-2"></i>
+            Shop Now
+        </a>
+    </div>
+</section>
+
+<!-- Trending Products Section -->
+<section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-fire text-orange-500 mr-2"></i>
+                Trending Now
+            </h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                These products are flying off the shelves! Don't miss out on what everyone's talking about.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for product in trending_products %}
+                <div class="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                     onclick="window.location.href='{% url 'product_detail' product.id %}'">
+                    <div class="aspect-square bg-gray-100 overflow-hidden relative">
+                        <img src="{{ product.image_url }}" 
+                             alt="{{ product.title }}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        
+                        <!-- Trending Badge -->
+                        <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold animate-pulse">
+                            <i class="fas fa-fire mr-1"></i>
+                            #{{ forloop.counter }} Trending
+                        </div>
+                        
+                        <!-- Click Count Badge -->
+                        <div class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs">
+                            {{ product.click_count }} clicks
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                {{ product.category.name }}
+                            </span>
+                            <div class="flex items-center text-yellow-500 text-sm">
+                                <i class="fas fa-star mr-1"></i>
+                                {{ product.rating_rate }}
+                                <span class="text-gray-500 ml-1">({{ product.rating_count }})</span>
+                            </div>
+                        </div>
+                        
+                        <h3 class="font-bold text-lg text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {{ product.title }}
+                        </h3>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-bold text-gray-900">
+                                ${{ product.price }}
+                            </span>
+                            <button class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 text-lg">No trending products yet. Start clicking to see trends!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Recent Products Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-12">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Latest Products</h2>
+                <p class="text-gray-600">Fresh arrivals you don't want to miss</p>
+            </div>
+            <a href="{% url 'products_list' %}" 
+               class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                View All Products
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="recent-products">
+            {% for product in recent_products %}
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
+                    <div class="aspect-square bg-gray-100 overflow-hidden">
+                        <img src="{{ product.image_url }}" 
+                             alt="{{ product.title }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                                {{ product.category.name }}
+                            </span>
+                            <div class="flex items-center text-yellow-500 text-sm">
+                                <i class="fas fa-star mr-1"></i>
+                                {{ product.rating_rate }}
+                            </div>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ product.title }}</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold text-gray-900">${{ product.price }}</span>
+                            <button onclick="trackProductClick({{ product.id }}); window.location.href='{% url 'product_detail' product.id %}'" 
+                                    class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm">
+                                View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-16 bg-gradient-to-r from-gray-900 to-blue-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div>
+                <div class="text-4xl font-bold mb-2">{{ products_count|default:"20+" }}</div>
+                <div class="text-blue-200">Products Available</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold mb-2">{{ total_clicks|default:"1000+" }}</div>
+                <div class="text-blue-200">Customer Interactions</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold mb-2">{{ categories_count|default:"4" }}</div>
+                <div class="text-blue-200">Categories</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

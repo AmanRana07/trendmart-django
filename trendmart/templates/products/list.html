@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Products - TrendMart{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            {% if selected_category %}
+                {{ selected_category|title }} Products
+            {% else %}
+                All Products
+            {% endif %}
+        </h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+            Discover amazing products from our extensive collection
+        </p>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex flex-wrap items-center space-x-2 mb-4 lg:mb-0">
+                <span class="text-gray-700 font-medium mr-2">Categories:</span>
+                <a href="{% url 'products_list' %}" 
+                   class="px-4 py-2 rounded-full text-sm font-medium transition-colors {% if not selected_category %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    All
+                </a>
+                {% for category in categories %}
+                    <a href="{% url 'products_list' %}?category={{ category.slug }}" 
+                       class="px-4 py-2 rounded-full text-sm font-medium transition-colors {% if selected_category == category.slug %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                        {{ category.name }}
+                    </a>
+                {% endfor %}
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <select id="sortSelect" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="newest">Newest First</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="popular">Most Popular</option>
+                </select>
+                
+                <div class="flex items-center space-x-2">
+                    <button id="gridView" class="p-2 rounded-lg bg-blue-600 text-white">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button id="listView" class="p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+        {% for product in products %}
+            <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group product-card">
+                <div class="aspect-square bg-gray-100 overflow-hidden relative">
+                    <img src="{{ product.image_url }}" 
+                         alt="{{ product.title }}" 
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    
+                    <!-- Trending Badge -->
+                    {% if product.click_count > 10 %}
+                        <div class="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold animate-pulse">
+                            <i class="fas fa-fire mr-1"></i>HOT
+                        </div>
+                    {% elif product.click_count > 5 %}
+                        <div class="absolute top-3 left-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                            <i class="fas fa-chart-line mr-1"></i>POPULAR
+                        </div>
+                    {% else %}
+                        <div class="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                            <i class="fas fa-sparkles mr-1"></i>NEW
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Click Count -->
+                    <div class="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs">
+                        {{ product.click_count }} clicks
+                    </div>
+                    
+                    <!-- Quick Action Overlay -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <button class="bg-white text-gray-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                            Quick View
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                            {{ product.category.name }}
+                        </span>
+                        <div class="flex items-center text-yellow-500 text-sm">
+                            <i class="fas fa-star mr-1"></i>
+                            {{ product.rating_rate }}
+                            <span class="text-gray-500 ml-1 text-xs">({{ product.rating_count }})</span>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {{ product.title }}
+                    </h3>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gray-900">
+                            ${{ product.price }}
+                        </span>
+                        <a href="{% url 'product_detail' product.id %}" 
+                           onclick="trackProductClick({{ product.id }})"
+                           class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-2 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold text-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-span-full text-center py-16">
+                <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Products Found</h3>
+                <p class="text-gray-500">Try adjusting your filters or check back later.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Load More Button -->
+    <div class="text-center">
+        <button id="load-more-btn" 
+                onclick="loadMoreProducts()" 
+                class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold inline-flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Load More Products
+        </button>
+    </div>
+</div>
+
+<script>
+    // View Toggle
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const productsContainer = document.getElementById('products-container');
+    
+    gridView.addEventListener('click', () => {
+        productsContainer.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12';
+        gridView.className = 'p-2 rounded-lg bg-blue-600 text-white';
+        listView.className = 'p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors';
+    });
+    
+    listView.addEventListener('click', () => {
+        productsContainer.className = 'space-y-4 mb-12';
+        listView.className = 'p-2 rounded-lg bg-blue-600 text-white';
+        gridView.className = 'p-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors';
+        
+        // Convert to list view
+        const cards = document.querySelectorAll('.product-card');
+        cards.forEach(card => {
+            card.className = 'bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group product-card flex';
+        });
+    });
+
+    // Sort functionality
+    document.getElementById('sortSelect').addEventListener('change', function() {
+        const sortValue = this.value;
+        // Add sorting logic here or reload page with sort parameter
+        const url = new URL(window.location);
+        url.searchParams.set('sort', sortValue);
+        window.location.href = url.toString();
+    });
+</script>
+{% endblock %}

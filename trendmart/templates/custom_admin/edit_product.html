@@ -1,0 +1,356 @@
+{% extends 'custom_admin/base_admin.html' %}
+
+{% block page_title %}Edit Product{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Main Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                            <i class="fas fa-edit text-blue-600 mr-3"></i>
+                            Edit Product
+                        </h2>
+                        <p class="text-gray-600">Update product information and settings</p>
+                    </div>
+                    <a href="{% url 'admin_products' %}" 
+                       class="text-gray-600 hover:text-gray-800 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Products
+                    </a>
+                </div>
+                
+                <form method="POST" class="space-y-6" id="editForm">
+                    {% csrf_token %}
+                    
+                    <!-- Product Title -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-heading mr-2 text-blue-500"></i>Product Title
+                        </label>
+                        {{ form.title }}
+                        <p class="text-xs text-gray-500 mt-1">Make it descriptive and SEO-friendly</p>
+                    </div>
+                    
+                    <!-- Category & Price Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-2 text-green-500"></i>Category
+                            </label>
+                            {{ form.category }}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-dollar-sign mr-2 text-green-500"></i>Price ($)
+                            </label>
+                            {{ form.price }}
+                            <p class="text-xs text-gray-500 mt-1">Current: <span class="font-bold">${{ product.price }}</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2 text-purple-500"></i>Product Description
+                        </label>
+                        {{ form.description }}
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-xs text-gray-500">Describe the product features and benefits</p>
+                            <span class="text-xs text-gray-400" id="charCount">{{ product.description|length }} characters</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Image URL -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-image mr-2 text-pink-500"></i>Image URL
+                        </label>
+                        {{ form.image_url }}
+                        <p class="text-xs text-gray-500 mt-1">High-quality product image (recommended: 500x500px or larger)</p>
+                    </div>
+                    
+                    <!-- Rating Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-star mr-2 text-yellow-500"></i>Rating (0-5)
+                            </label>
+                            {{ form.rating_rate }}
+                            <div class="flex items-center mt-1">
+                                <div id="starRating" class="flex text-yellow-400 mr-2"></div>
+                                <span class="text-xs text-gray-500">Current: {{ product.rating_rate }}/5</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-users mr-2 text-blue-500"></i>Rating Count
+                            </label>
+                            {{ form.rating_count }}
+                            <p class="text-xs text-gray-500 mt-1">Number of customer reviews</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Toggle -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Product Status</label>
+                                <p class="text-xs text-gray-500">Control product visibility on your website</p>
+                            </div>
+                            <div class="flex items-center">
+                                {{ form.is_active }}
+                                <label for="{{ form.is_active.id_for_label }}" class="ml-3 text-sm font-medium text-gray-700">
+                                    Active & Visible
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <a href="{% url 'admin_products' %}" 
+                           class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        
+                        <button type="button" 
+                                onclick="previewChanges()"
+                                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+                            <i class="fas fa-eye mr-2"></i>
+                            Preview
+                        </button>
+                        
+                        <button type="submit" 
+                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Sidebar Info -->
+        <div class="space-y-6">
+            
+            <!-- Current Product Preview -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-eye mr-2 text-blue-500"></i>
+                    Current Preview
+                </h3>
+                <div class="space-y-4">
+                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                        <img src="{{ product.image_url }}" 
+                             alt="{{ product.title }}" 
+                             class="w-full h-full object-cover"
+                             id="previewImage">
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900 mb-2" id="previewTitle">{{ product.title }}</h4>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                {{ product.category.name }}
+                            </span>
+                            <div class="flex items-center text-yellow-500 text-sm">
+                                <i class="fas fa-star mr-1"></i>
+                                <span id="previewRating">{{ product.rating_rate }}</span>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-900" id="previewPrice">${{ product.price }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Product Stats -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-green-500"></i>
+                    Product Analytics
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-mouse-pointer text-blue-600 mr-2"></i>
+                            <span class="text-sm font-medium text-blue-800">Total Clicks</span>
+                        </div>
+                        <span class="text-lg font-bold text-blue-600">{{ product.click_count }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar text-green-600 mr-2"></i>
+                            <span class="text-sm font-medium text-green-800">Created</span>
+                        </div>
+                        <span class="text-sm font-bold text-green-600">{{ product.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-edit text-purple-600 mr-2"></i>
+                            <span class="text-sm font-medium text-purple-800">Last Updated</span>
+                        </div>
+                        <span class="text-sm font-bold text-purple-600">{{ product.updated_at|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    {% if product.last_clicked %}
+                    <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-orange-600 mr-2"></i>
+                            <span class="text-sm font-medium text-orange-800">Last Clicked</span>
+                        </div>
+                        <span class="text-sm font-bold text-orange-600">{{ product.last_clicked|date:"M d" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+                    Quick Actions
+                </h3>
+                <div class="space-y-3">
+                    <a href="{% url 'product_detail' product.id %}" 
+                       target="_blank"
+                       class="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-blue-800">
+                        <span class="flex items-center">
+                            <i class="fas fa-external-link-alt mr-3"></i>
+                            View Live Product
+                        </span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    
+                    <button onclick="duplicateProduct()" 
+                            class="w-full flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-green-800">
+                        <span class="flex items-center">
+                            <i class="fas fa-copy mr-3"></i>
+                            Duplicate Product
+                        </span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <a href="{% url 'admin_delete_product' product.id %}" 
+                       class="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors text-red-800">
+                        <span class="flex items-center">
+                            <i class="fas fa-trash mr-3"></i>
+                            Delete Product
+                        </span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Character counter for description
+    const descTextarea = document.querySelector('textarea[name="description"]');
+    const charCount = document.getElementById('charCount');
+    
+    if (descTextarea && charCount) {
+        descTextarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length + ' characters';
+        });
+    }
+    
+    // Update star rating display
+    const ratingInput = document.querySelector('input[name="rating_rate"]');
+    const starRating = document.getElementById('starRating');
+    
+    function updateStars(rating) {
+        if (!starRating) return;
+        starRating.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('i');
+            star.className = i <= Math.floor(rating) ? 'fas fa-star' : 'far fa-star';
+            starRating.appendChild(star);
+        }
+    }
+    
+    if (ratingInput) {
+        updateStars({{ product.rating_rate }});
+        ratingInput.addEventListener('input', function() {
+            updateStars(parseFloat(this.value) || 0);
+        });
+    }
+    
+    // Live preview updates
+    function updatePreview() {
+        const titleInput = document.querySelector('input[name="title"]');
+        const priceInput = document.querySelector('input[name="price"]');
+        const imageInput = document.querySelector('input[name="image_url"]');
+        const ratingInput = document.querySelector('input[name="rating_rate"]');
+        
+        if (titleInput) {
+            document.getElementById('previewTitle').textContent = titleInput.value;
+        }
+        if (priceInput) {
+            document.getElementById('previewPrice').textContent = '$' + priceInput.value;
+        }
+        if (imageInput && imageInput.value) {
+            document.getElementById('previewImage').src = imageInput.value;
+        }
+        if (ratingInput) {
+            document.getElementById('previewRating').textContent = ratingInput.value;
+        }
+    }
+    
+    // Add event listeners for live preview
+    ['title', 'price', 'image_url', 'rating_rate'].forEach(fieldName => {
+        const input = document.querySelector(`[name="${fieldName}"]`);
+        if (input) {
+            input.addEventListener('input', updatePreview);
+        }
+    });
+    
+    // Preview changes function
+    function previewChanges() {
+        const form = document.getElementById('editForm');
+        const formData = new FormData(form);
+        
+        // Show preview modal or new tab with changes
+        alert('Preview functionality - would open product preview with current form data');
+    }
+    
+    // Duplicate product function
+    function duplicateProduct() {
+        if (confirm('Create a copy of this product?')) {
+            // Implementation for duplicating product
+            alert('Duplicate functionality - would create a copy of this product');
+        }
+    }
+    
+    // Form validation
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        const title = document.querySelector('input[name="title"]').value.trim();
+        const price = document.querySelector('input[name="price"]').value;
+        
+        if (!title) {
+            alert('Product title is required!');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!price || parseFloat(price) <= 0) {
+            alert('Please enter a valid price!');
+            e.preventDefault();
+            return;
+        }
+        
+        // Confirm save
+        if (!confirm('Save changes to this product?')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

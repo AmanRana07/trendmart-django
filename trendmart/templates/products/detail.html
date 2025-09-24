@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.title }} - TrendMart{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 inline-flex items-center">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mr-3"></i>
+                    <a href="{% url 'products_list' %}" class="text-gray-700 hover:text-blue-600">Products</a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mr-3"></i>
+                    <span class="text-gray-500">{{ product.category.name }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-start">
+        <!-- Product Image -->
+        <div class="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-8 lg:mb-0">
+            <img src="{{ product.image_url }}" 
+                 alt="{{ product.title }}" 
+                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+        </div>
+
+        <!-- Product Info -->
+        <div class="lg:pt-8">
+            <!-- Category & Rating -->
+            <div class="flex items-center justify-between mb-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <i class="fas fa-tag mr-2"></i>{{ product.category.name }}
+                </span>
+                <div class="flex items-center">
+                    <div class="flex text-yellow-400 mr-2">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= product.rating_rate|floatformat:0 %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-sm text-gray-600">{{ product.rating_rate }} ({{ product.rating_count }} reviews)</span>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.title }}</h1>
+
+            <!-- Price -->
+            <div class="mb-6">
+                <span class="text-4xl font-bold text-gray-900">${{ product.price }}</span>
+                <span class="text-sm text-gray-500 ml-2">Free shipping</span>
+            </div>
+
+            <!-- Trending Badge -->
+            {% if product.click_count > 10 %}
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full inline-flex items-center mb-6 animate-pulse">
+                    <i class="fas fa-fire mr-2"></i>
+                    🔥 TRENDING - {{ product.click_count }} people viewed this
+                </div>
+            {% elif product.click_count > 5 %}
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full inline-flex items-center mb-6">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    📈 POPULAR - {{ product.click_count }} views
+                </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex space-x-4 mb-8">
+                <button class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold flex items-center flex-1 justify-center">
+                    <i class="fas fa-shopping-cart mr-2"></i>
+                    Add to Cart
+                </button>
+                <button class="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-full hover:border-gray-400 hover:bg-gray-50 transition-colors font-semibold flex items-center justify-center">
+                    <i class="fas fa-heart mr-2"></i>
+                    Wishlist
+                </button>
+            </div>
+
+            <!-- Product Features -->
+            <div class="border-t pt-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Product Features</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-center text-gray-700">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Free worldwide shipping
+                    </li>
+                    <li class="flex items-center text-gray-700">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        30-day return policy
+                    </li>
+                    <li class="flex items-center text-gray-700">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Secure payment options
+                    </li>
+                    <li class="flex items-center text-gray-700">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        24/7 customer support
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+{% if related_products %}
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Related Products</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for related_product in related_products %}
+                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                    <div class="aspect-square bg-gray-100 overflow-hidden">
+                        <img src="{{ related_product.image_url }}" 
+                             alt="{{ related_product.title }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ related_product.title }}</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold text-gray-900">${{ related_product.price }}</span>
+                            <a href="{% url 'product_detail' related_product.id %}" 
+                               onclick="trackProductClick({{ related_product.id }})"
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'custom_admin/base_admin.html' %}
+
+{% block page_title %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-50 px-8 py-6 border-b border-red-200">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-red-900 mb-1">Delete Product</h2>
+                    <p class="text-red-700">This action cannot be undone</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Product Preview -->
+        <div class="p-8">
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <div class="flex items-start space-x-4">
+                    <img src="{{ product.image_url }}" 
+                         alt="{{ product.title }}" 
+                         class="w-20 h-20 rounded-lg object-cover flex-shrink-0">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">{{ product.title }}</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div>
+                                <span class="font-medium">Category:</span> 
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs ml-1">
+                                    {{ product.category.name }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Price:</span> 
+                                <span class="font-bold text-green-600">${{ product.price }}</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Rating:</span> 
+                                <span class="text-yellow-500">★ {{ product.rating_rate }} ({{ product.rating_count }})</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Clicks:</span> 
+                                <span class="font-bold text-purple-600">{{ product.click_count }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="font-medium text-gray-600">Status:</span>
+                            {% if product.is_active %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs ml-1">Active</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs ml-1">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-bold text-red-800 mb-1">Are you absolutely sure?</h4>
+                        <div class="text-sm text-red-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>This will permanently delete the product "<strong>{{ product.title }}</strong>"</li>
+                                <li>All click tracking data ({{ product.click_count }} clicks) will be lost</li>
+                                <li>The product will be removed from all customer views</li>
+                                <li>This action cannot be undone or recovered</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type to Confirm (Advanced Security) -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Type <strong>"DELETE"</strong> to confirm:
+                </label>
+                <input type="text" 
+                       id="confirmText" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                       placeholder="Type DELETE here"
+                       autocomplete="off">
+                <p class="text-sm text-gray-500 mt-1">This helps prevent accidental deletions</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <form method="POST" id="deleteForm">
+                {% csrf_token %}
+                <div class="flex items-center justify-between space-x-4">
+                    <a href="{% url 'admin_products' %}" 
+                       class="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center font-semibold">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancel
+                    </a>
+                    
+                    <button type="submit" 
+                            id="deleteButton"
+                            disabled
+                            class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-trash mr-2"></i>
+                        Delete Product
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Alternative Actions -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <p class="text-sm text-gray-600 mb-3">Instead of deleting, you can also:</p>
+                <div class="flex space-x-3">
+                    <button onclick="toggleStatus()" 
+                            class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm">
+                        <i class="fas fa-eye-slash mr-2"></i>
+                        {% if product.is_active %}Deactivate{% else %}Activate{% endif %} Product
+                    </button>
+                    
+                    <a href="{% url 'admin_edit_product' product.id %}" 
+                       class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edit Instead
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable delete button only when "DELETE" is typed
+    const confirmText = document.getElementById('confirmText');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    confirmText.addEventListener('input', function() {
+        if (this.value === 'DELETE') {
+            deleteButton.disabled = false;
+            deleteButton.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            deleteButton.classList.add('bg-red-600', 'hover:bg-red-700');
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            deleteButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+        }
+    });
+    
+    // Double confirmation on form submit
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        if (!confirm('Last chance! Are you sure you want to permanently delete this product?')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Toggle status function
+    function toggleStatus() {
+        if (confirm('{% if product.is_active %}Deactivate{% else %}Activate{% endif %} this product instead of deleting?')) {
+            fetch(`/admin/products/{{ product.id }}/toggle/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '{% url "admin_products" %}';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+</script>
+{% endblock %}

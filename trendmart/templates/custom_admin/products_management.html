@@ -1,0 +1,197 @@
+{% extends 'custom_admin/base_admin.html' %}
+
+{% block page_title %}Products Management{% endblock %}
+
+{% block content %}
+<!-- Actions Header -->
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'admin_add_product' %}" 
+           class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Add New Product
+        </a>
+        
+        <button class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center">
+            <i class="fas fa-download mr-2"></i>
+            Export CSV
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <form method="GET" class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-64">
+            <input type="text" 
+                   name="search" 
+                   value="{{ search }}"
+                   placeholder="Search products..." 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+        
+        <select name="category" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-search mr-2"></i>
+            Search
+        </button>
+        
+        <a href="{% url 'admin_products' %}" class="text-gray-600 hover:text-gray-800 px-4 py-3">
+            Clear Filters
+        </a>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clicks</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for product in products %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img src="{{ product.image_url }}" alt="{{ product.title }}" class="w-12 h-12 rounded-lg object-cover">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ product.title|truncatechars:40 }}</div>
+                                    <div class="text-sm text-gray-500">ID: {{ product.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                {{ product.category.name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${{ product.price }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="flex items-center">
+                                <span class="text-yellow-400 mr-1">★</span>
+                                {{ product.rating_rate }} ({{ product.rating_count }})
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if product.click_count > 10 %}
+                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                    🔥 {{ product.click_count }}
+                                </span>
+                            {% elif product.click_count > 5 %}
+                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                    📈 {{ product.click_count }}
+                                </span>
+                            {% else %}
+                                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                                    {{ product.click_count }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="toggleProductStatus({{ product.id }})" 
+                                    class="{% if product.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity">
+                                {% if product.is_active %}✓ Active{% else %}✗ Inactive{% endif %}
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'admin_edit_product' product.id %}" 
+                                   class="text-blue-600 hover:text-blue-900 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_delete_product' product.id %}" 
+                                   class="text-red-600 hover:text-red-900 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                <a href="{% url 'product_detail' product.id %}" 
+                                   target="_blank"
+                                   class="text-gray-600 hover:text-gray-900 transition-colors">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-box-open text-4xl mb-4 text-gray-300"></i>
+                            <p>No products found</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing {{ products.start_index }} to {{ products.end_index }} of {{ products.paginator.count }} products
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if products.has_previous %}
+                            <a href="?page={{ products.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% endif %}
+                        
+                        {% for num in products.paginator.page_range %}
+                            {% if products.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ num }}
+                                </span>
+                            {% else %}
+                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                            <a href="?page={{ products.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
