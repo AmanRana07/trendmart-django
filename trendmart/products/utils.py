@@ -17,7 +17,7 @@ class FakeStoreAPIClient:
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
         "Accept": "application/json",
-        "Referer": "https://github.com/",  # Make it look like GitHub request
+        "Referer": "https://github.com/",  
     }
 
     @classmethod
@@ -26,7 +26,7 @@ class FakeStoreAPIClient:
         for proxy_base in cls.PROXIES:
             try:
                 proxy_url = f"{proxy_base}{url}"
-                print(f"🔄 Trying proxy: {proxy_base}")
+                print(f"   Trying proxy: {proxy_base}")
 
                 response = requests.get(proxy_url, headers=cls.HEADERS, timeout=30)
 
@@ -43,7 +43,7 @@ class FakeStoreAPIClient:
                         return response.json()
 
             except Exception as e:
-                print(f"❌ Proxy {proxy_base} failed: {e}")
+                print(f"  Proxy {proxy_base} failed: {e}")
                 continue
 
         raise Exception("All proxy services failed")
@@ -52,37 +52,37 @@ class FakeStoreAPIClient:
     def fetch_products(cls):
         """Fetch products via proxy services"""
         try:
-            print("🔄 Fetching products via proxy...")
+            print("   Fetching products via proxy...")
             url = f"{cls.BASE_URL}/products"
             data = cls._fetch_via_proxy(url)
-            print(f"✅ Successfully fetched {len(data)} products via proxy")
+            print(f"  Successfully fetched {len(data)} products via proxy")
             return data
         except Exception as e:
-            print(f"❌ Proxy fetch failed: {e}")
+            print(f"  Proxy fetch failed: {e}")
             raise
 
     @classmethod
     def fetch_categories(cls):
         """Fetch categories via proxy services"""
         try:
-            print("🔄 Fetching categories via proxy...")
+            print("   Fetching categories via proxy...")
             url = f"{cls.BASE_URL}/products/categories"
             data = cls._fetch_via_proxy(url)
-            print(f"✅ Successfully fetched {len(data)} categories via proxy")
+            print(f"  Successfully fetched {len(data)} categories via proxy")
             return data
         except Exception as e:
-            print(f"❌ Proxy fetch failed: {e}")
+            print(f"  Proxy fetch failed: {e}")
             raise
 
     @classmethod
     def sync_data(cls):
         """Sync products and categories with local database"""
-        print("🚀 Starting proxy-based API sync...")
+        print("     Starting proxy-based API sync...")
 
         try:
             # Sync categories first
             categories_data = cls.fetch_categories()
-            print(f"📋 Processing {len(categories_data)} categories...")
+            print(f"    Processing {len(categories_data)} categories...")
 
             for cat_name in categories_data:
                 category, created = Category.objects.get_or_create(
@@ -92,7 +92,7 @@ class FakeStoreAPIClient:
                     },
                 )
                 if created:
-                    print(f"✅ Created category: {category.name}")
+                    print(f"  Created category: {category.name}")
 
             # Sync products
             products_data = cls.fetch_products()
@@ -127,22 +127,22 @@ class FakeStoreAPIClient:
 
                     if created:
                         synced_count += 1
-                        print(f"✅ Created: {product.title[:50]}...")
+                        print(f"  Created: {product.title[:50]}...")
                     else:
-                        print(f"🔄 Updated: {product.title[:50]}...")
+                        print(f"   Updated: {product.title[:50]}...")
 
                 except Exception as e:
-                    print(f"❌ Error syncing product {product_data.get('id')}: {e}")
+                    print(f"  Error syncing product {product_data.get('id')}: {e}")
                     continue
 
             total_products = Product.objects.filter(is_active=True).count()
             total_categories = Category.objects.count()
 
-            result = f"✅ SUCCESS! Synced {synced_count} new products and {len(categories_data)} categories via proxy. Database: {total_products} products, {total_categories} categories."
+            result = f"  SUCCESS! Synced {synced_count} new products and {len(categories_data)} categories via proxy. Database: {total_products} products, {total_categories} categories."
             print(result)
             return result
 
         except Exception as e:
-            error_msg = f"❌ Proxy API sync failed: {str(e)}"
+            error_msg = f"  Proxy API sync failed: {str(e)}"
             print(error_msg)
             raise Exception(error_msg)
