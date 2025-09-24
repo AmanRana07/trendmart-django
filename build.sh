@@ -6,6 +6,16 @@ set -o errexit
 echo " Starting TrendMart deployment build..."
 
 
+
+
+# Show current directory and contents for debugging
+echo " Current directory: $(pwd)"
+echo " Directory contents:"
+ls -la
+
+echo " Installing dependencies..."
+pip install -r requirements.txt
+
 python -c "
 import requests
 try:
@@ -18,14 +28,6 @@ except Exception as e:
     print(f' API connection failed: {e}')
     exit(1)
 "
-
-# Show current directory and contents for debugging
-echo " Current directory: $(pwd)"
-echo " Directory contents:"
-ls -la
-
-echo " Installing dependencies..."
-pip install -r requirements.txt
 
 # Verify gunicorn installation
 echo " Verifying gunicorn installation..."
