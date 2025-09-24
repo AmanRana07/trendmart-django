@@ -10,6 +10,13 @@ echo " Current directory: $(pwd)"
 echo " Directory contents:"
 ls -la
 
+echo " Installing dependencies..."
+pip install -r requirements.txt
+
+# Verify gunicorn installation
+echo " Verifying gunicorn installation..."
+pip show gunicorn
+
 # Find manage.py location
 echo " Looking for manage.py..."
 find . -name "manage.py" -type f
@@ -33,12 +40,7 @@ echo "⬆️  Upgrading pip..."
 pip install --upgrade pip
 
 # Install Python dependencies
-echo " Installing dependencies..."
-pip install -r requirements.txt
 
-# Verify gunicorn installation
-echo " Verifying gunicorn installation..."
-pip show gunicorn
 
 # Collect static files
 echo " Collecting static files..."
